@@ -19,6 +19,7 @@ public class SwerveModule {
     private final SparkMax m_turningSparkMax;
 
     private final CANcoder m_turningCANCoder;
+    private final String m_moduleName;
     
     // Absolute offset for the CANcoder
     private final double m_chassisAngularOffset;
@@ -27,11 +28,10 @@ public class SwerveModule {
 
     /**
      * Constructs a SwerveModule and configures the driving and turning motor,
-     * encoder, and PID controller. This configuration is specific to the REV
-     * MAXSwerve Module built with NEOs, SPARKS MAX, and a Through Bore
-     * Encoder.
+     * encoder, and PID controller.
      */
-    public SwerveModule(int drivingCANId, int turningCANId, int turningCANCoderId, double chassisAngularOffset) {
+    public SwerveModule(String moduleName, int drivingCANId, int turningCANId, int turningCANCoderId, double chassisAngularOffset) {
+        m_moduleName = moduleName;
         m_drivingSparkMax = new SparkMax(drivingCANId, MotorType.kBrushless);
         m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
         m_turningCANCoder = new CANcoder(turningCANCoderId);
@@ -53,7 +53,8 @@ public class SwerveModule {
         // Driving Motor Configuration
         drivingConfig
             .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(40)
+            .inverted(false); // Change to true if robot moves backward
         
         drivingConfig.encoder
             .positionConversionFactor(ModuleConstants.DRIVING_ENCODER_POSITION_FACTOR)
@@ -69,7 +70,8 @@ public class SwerveModule {
         // Turning Motor Configuration
         turningConfig
             .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(20);
+            .smartCurrentLimit(20)
+            .inverted(true); // SDS MK4i steer motors are often geared such that they need inversion
 
         turningConfig.encoder
             .positionConversionFactor(ModuleConstants.TURNING_ENCODER_POSITION_FACTOR)
@@ -133,8 +135,20 @@ public class SwerveModule {
         m_drivingSparkMax.getEncoder().setPosition(0);
         
         // Sync absolute encoder to relative encoder
-        double absolutePosition = m_turningCANCoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI; // Convert rotations to radians
+        // Phoenix 6: getValueAsDouble() is rotations by default.
+        // We wait a tiny bit to ensure the CAN bus signal has been received.
+        var absolutePositionSignal = m_turningCANCoder.getAbsolutePosition();
+        absolutePositionSignal.waitForUpdate(0.1); // Wait 100ms for fresh data
+        
+        double absolutePosition = absolutePositionSignal.getValueAsDouble() * 2 * Math.PI; // Convert rotations to radians
         absolutePosition -= m_chassisAngularOffset; // Remove offset
+        
         m_turningSparkMax.getEncoder().setPosition(absolutePosition);
+    }
+
+    public void updateTelemetry() {
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Steer Pos", m_turningSparkMax.getEncoder().getPosition());
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Drive Vel", m_drivingSparkMax.getEncoder().getVelocity());
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " CANcoder Pos", m_turningCANCoder.getAbsolutePosition().getValueAsDouble() * 360.0);
     }
 }

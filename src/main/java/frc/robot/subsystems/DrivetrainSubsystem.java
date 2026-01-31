@@ -17,24 +17,28 @@ import frc.robot.Constants.DeviceIDs;
 public class DrivetrainSubsystem extends SubsystemBase {
     // Robot Swerve Modules
     private final SwerveModule m_frontLeft = new SwerveModule(
+            "FL",
             DeviceIDs.FRONT_LEFT_DRIVING_CAN_ID,
             DeviceIDs.FRONT_LEFT_TURNING_CAN_ID,
             DeviceIDs.FRONT_LEFT_CANCODER_ID,
             DriveConstants.FRONT_LEFT_CHASSIS_ANGULAR_OFFSET);
 
     private final SwerveModule m_frontRight = new SwerveModule(
+            "FR",
             DeviceIDs.FRONT_RIGHT_DRIVING_CAN_ID,
             DeviceIDs.FRONT_RIGHT_TURNING_CAN_ID,
             DeviceIDs.FRONT_RIGHT_CANCODER_ID,
             DriveConstants.FRONT_RIGHT_CHASSIS_ANGULAR_OFFSET);
 
     private final SwerveModule m_rearLeft = new SwerveModule(
+            "RL",
             DeviceIDs.BACK_LEFT_DRIVING_CAN_ID,
             DeviceIDs.BACK_LEFT_TURNING_CAN_ID,
             DeviceIDs.BACK_LEFT_CANCODER_ID,
             DriveConstants.BACK_LEFT_CHASSIS_ANGULAR_OFFSET);
 
     private final SwerveModule m_rearRight = new SwerveModule(
+            "RR",
             DeviceIDs.BACK_RIGHT_DRIVING_CAN_ID,
             DeviceIDs.BACK_RIGHT_TURNING_CAN_ID,
             DeviceIDs.BACK_RIGHT_CANCODER_ID,
@@ -74,6 +78,11 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
         SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putString("Robot Location", getPose().toString());
+
+        m_frontLeft.updateTelemetry();
+        m_frontRight.updateTelemetry();
+        m_rearLeft.updateTelemetry();
+        m_rearRight.updateTelemetry();
     }
 
     /**
