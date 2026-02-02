@@ -28,6 +28,9 @@ public class DriveCommand extends Command {
         // Slow mode toggle
         double speedMultiplier = m_controller.rightBumper().getAsBoolean() ? 0.5 : 1.0;
 
+        // Robot Relative Mode (Debug) - Hold Left Bumper to disable Field Relative
+        boolean fieldRelative = !m_controller.leftBumper().getAsBoolean();
+
         // Get joystick inputs
         // LEFT STICK: Controls robot translation (movement)
         // - Y acts as forward/backward (X in field coordinates)
@@ -51,7 +54,8 @@ public class DriveCommand extends Command {
         SmartDashboard.putNumber("Drive/Raw Left Y", m_controller.getLeftY());
         SmartDashboard.putNumber("Drive/Raw Left X", m_controller.getLeftX());
         SmartDashboard.putNumber("Drive/Raw Right X", m_controller.getRightX());
+        SmartDashboard.putBoolean("Drive/FieldRelative", fieldRelative);
 
-        m_drivetrain.drive(xSpeed, ySpeed, rot, true);
+        m_drivetrain.drive(xSpeed, ySpeed, rot, fieldRelative);
     }
 }
