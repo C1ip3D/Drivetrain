@@ -86,15 +86,15 @@ public final class Constants {
     }
 
     public static final class DeviceIDs {
-        public static final int FRONT_LEFT_DRIVING_CAN_ID = 1;
-        public static final int FRONT_RIGHT_DRIVING_CAN_ID = 3;
-        public static final int BACK_LEFT_DRIVING_CAN_ID = 5;
-        public static final int BACK_RIGHT_DRIVING_CAN_ID = 7;
+        public static final int FRONT_LEFT_DRIVING_CAN_ID = 2;
+        public static final int FRONT_RIGHT_DRIVING_CAN_ID = 4;
+        public static final int BACK_LEFT_DRIVING_CAN_ID = 6;
+        public static final int BACK_RIGHT_DRIVING_CAN_ID = 8;
 
-        public static final int FRONT_LEFT_TURNING_CAN_ID = 2;
-        public static final int FRONT_RIGHT_TURNING_CAN_ID = 4;
-        public static final int BACK_LEFT_TURNING_CAN_ID = 6;
-        public static final int BACK_RIGHT_TURNING_CAN_ID = 8;
+        public static final int FRONT_LEFT_TURNING_CAN_ID = 1;
+        public static final int FRONT_RIGHT_TURNING_CAN_ID = 3;
+        public static final int BACK_LEFT_TURNING_CAN_ID = 5;
+        public static final int BACK_RIGHT_TURNING_CAN_ID = 7;
 
         public static final int FRONT_LEFT_CANCODER_ID = 9;
         public static final int FRONT_RIGHT_CANCODER_ID = 10;
