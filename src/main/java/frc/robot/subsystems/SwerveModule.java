@@ -20,7 +20,7 @@ public class SwerveModule {
 
     private final CANcoder m_turningCANCoder;
     private final String m_moduleName;
-    
+
     // Absolute offset for the CANcoder
     private final double m_chassisAngularOffset;
 
@@ -30,7 +30,8 @@ public class SwerveModule {
      * Constructs a SwerveModule and configures the driving and turning motor,
      * encoder, and PID controller.
      */
-    public SwerveModule(String moduleName, int drivingCANId, int turningCANId, int turningCANCoderId, double chassisAngularOffset) {
+    public SwerveModule(String moduleName, int drivingCANId, int turningCANId, int turningCANCoderId,
+            double chassisAngularOffset) {
         m_moduleName = moduleName;
         m_drivingSparkMax = new SparkMax(drivingCANId, MotorType.kBrushless);
         m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
@@ -49,40 +50,39 @@ public class SwerveModule {
         SparkMaxConfig drivingConfig = new SparkMaxConfig();
         SparkMaxConfig turningConfig = new SparkMaxConfig();
 
-    
         // Driving Motor Configuration
         drivingConfig
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40)
-            .inverted(false); // Change to true if robot moves backward
-        
+                .idleMode(IdleMode.kBrake)
+                .smartCurrentLimit(40)
+                .inverted(false); // Change to true if robot moves backward
+
         drivingConfig.encoder
-            .positionConversionFactor(ModuleConstants.DRIVING_ENCODER_POSITION_FACTOR)
-            .velocityConversionFactor(ModuleConstants.DRIVING_ENCODER_VELOCITY_FACTOR);
+                .positionConversionFactor(ModuleConstants.DRIVING_ENCODER_POSITION_FACTOR)
+                .velocityConversionFactor(ModuleConstants.DRIVING_ENCODER_VELOCITY_FACTOR);
 
         drivingConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(ModuleConstants.DRIVING_P, ModuleConstants.DRIVING_I, ModuleConstants.DRIVING_D)
-            .velocityFF(ModuleConstants.DRIVING_FF)
-            .outputRange(ModuleConstants.DRIVING_MIN_OUTPUT, ModuleConstants.DRIVING_MAX_OUTPUT);
-
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(ModuleConstants.DRIVING_P, ModuleConstants.DRIVING_I, ModuleConstants.DRIVING_D)
+                .velocityFF(ModuleConstants.DRIVING_FF)
+                .outputRange(ModuleConstants.DRIVING_MIN_OUTPUT, ModuleConstants.DRIVING_MAX_OUTPUT);
 
         // Turning Motor Configuration
         turningConfig
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(20)
-            .inverted(true); // SDS MK4i steer motors are often geared such that they need inversion
+                .idleMode(IdleMode.kBrake)
+                .smartCurrentLimit(20)
+                .inverted(false); // Changed to false to fix PID runaway (helicoptering)
 
         turningConfig.encoder
-            .positionConversionFactor(ModuleConstants.TURNING_ENCODER_POSITION_FACTOR)
-            .velocityConversionFactor(ModuleConstants.TURNING_ENCODER_VELOCITY_FACTOR);
+                .positionConversionFactor(ModuleConstants.TURNING_ENCODER_POSITION_FACTOR)
+                .velocityConversionFactor(ModuleConstants.TURNING_ENCODER_VELOCITY_FACTOR);
 
         turningConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(ModuleConstants.TURNING_P, ModuleConstants.TURNING_I, ModuleConstants.TURNING_D)
-            .outputRange(ModuleConstants.TURNING_MIN_OUTPUT, ModuleConstants.TURNING_MAX_OUTPUT)
-            .positionWrappingEnabled(true)
-            .positionWrappingInputRange(ModuleConstants.TURNING_ENCODER_POSITION_PID_MIN_INPUT, ModuleConstants.TURNING_ENCODER_POSITION_PID_MAX_INPUT);
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(ModuleConstants.TURNING_P, ModuleConstants.TURNING_I, ModuleConstants.TURNING_D)
+                .outputRange(ModuleConstants.TURNING_MIN_OUTPUT, ModuleConstants.TURNING_MAX_OUTPUT)
+                .positionWrappingEnabled(true)
+                .positionWrappingInputRange(ModuleConstants.TURNING_ENCODER_POSITION_PID_MIN_INPUT,
+                        ModuleConstants.TURNING_ENCODER_POSITION_PID_MAX_INPUT);
 
         // Apply configurations
         m_drivingSparkMax.configure(drivingConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -96,9 +96,8 @@ public class SwerveModule {
      */
     public SwerveModuleState getState() {
         return new SwerveModuleState(
-            m_drivingSparkMax.getEncoder().getVelocity(),
-            new Rotation2d(m_turningSparkMax.getEncoder().getPosition())
-        );
+                m_drivingSparkMax.getEncoder().getVelocity(),
+                new Rotation2d(m_turningSparkMax.getEncoder().getPosition()));
     }
 
     /**
@@ -108,9 +107,8 @@ public class SwerveModule {
      */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
-            m_drivingSparkMax.getEncoder().getPosition(),
-            new Rotation2d(m_turningSparkMax.getEncoder().getPosition())
-        );
+                m_drivingSparkMax.getEncoder().getPosition(),
+                new Rotation2d(m_turningSparkMax.getEncoder().getPosition()));
     }
 
     /**
@@ -124,8 +122,10 @@ public class SwerveModule {
                 new Rotation2d(m_turningSparkMax.getEncoder().getPosition()));
 
         // Command driving and turning SPARKS MAX towards their respective setpoints
-        m_drivingSparkMax.getClosedLoopController().setReference(optimizedState.speedMetersPerSecond, SparkMax.ControlType.kVelocity);
-        m_turningSparkMax.getClosedLoopController().setReference(optimizedState.angle.getRadians(), SparkMax.ControlType.kPosition);
+        m_drivingSparkMax.getClosedLoopController().setReference(optimizedState.speedMetersPerSecond,
+                SparkMax.ControlType.kVelocity);
+        m_turningSparkMax.getClosedLoopController().setReference(optimizedState.angle.getRadians(),
+                SparkMax.ControlType.kPosition);
 
         m_desiredState = desiredState;
     }
@@ -133,22 +133,26 @@ public class SwerveModule {
     /** Zeroes all the SwerveModule encoders. */
     public void resetEncoders() {
         m_drivingSparkMax.getEncoder().setPosition(0);
-        
+
         // Sync absolute encoder to relative encoder
         // Phoenix 6: getValueAsDouble() is rotations by default.
         // We wait a tiny bit to ensure the CAN bus signal has been received.
         var absolutePositionSignal = m_turningCANCoder.getAbsolutePosition();
         absolutePositionSignal.waitForUpdate(0.1); // Wait 100ms for fresh data
-        
-        double absolutePosition = absolutePositionSignal.getValueAsDouble() * 2 * Math.PI; // Convert rotations to radians
+
+        double absolutePosition = absolutePositionSignal.getValueAsDouble() * 2 * Math.PI; // Convert rotations to
+                                                                                           // radians
         absolutePosition -= m_chassisAngularOffset; // Remove offset
-        
+
         m_turningSparkMax.getEncoder().setPosition(absolutePosition);
     }
 
     public void updateTelemetry() {
-        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Steer Pos", m_turningSparkMax.getEncoder().getPosition());
-        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Drive Vel", m_drivingSparkMax.getEncoder().getVelocity());
-        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " CANcoder Pos", m_turningCANCoder.getAbsolutePosition().getValueAsDouble() * 360.0);
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Steer Pos",
+                m_turningSparkMax.getEncoder().getPosition());
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " Drive Vel",
+                m_drivingSparkMax.getEncoder().getVelocity());
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putNumber(m_moduleName + " CANcoder Pos",
+                m_turningCANCoder.getAbsolutePosition().getValueAsDouble() * 360.0);
     }
 }
